@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SeeingCar</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Brand / Logo -->
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">
+        <!-- Simple camera+car hybrid icon using inline SVG -->
+        <svg viewBox="0 0 64 32" xmlns="http://www.w3.org/2000/svg">
+          <!-- Car body -->
+          <rect x="6" y="10" width="40" height="10" rx="3" ry="3" fill="#0ea5e9"/>
+          <!-- Camera top -->
+          <rect x="18" y="5" width="16" height="6" rx="2" ry="2" fill="#0369a1"/>
+          <!-- Wheels -->
+          <circle cx="14" cy="22" r="4" fill="#020617"/>
+          <circle cx="14" cy="22" r="2" fill="#e5e7eb"/>
+          <circle cx="34" cy="22" r="4" fill="#020617"/>
+          <circle cx="34" cy="22" r="2" fill="#e5e7eb"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        SeeingCar
+      </div>
+    </div>
+
+    <!-- Camera feed -->
+    <video id="camera" autoplay muted playsinline></video>
+
+    <!-- Overlay canvas (lanes, warnings, boxes) -->
+    <canvas id="overlay"></canvas>
+
+    <!-- HUD -->
+    <div class="hud">
+      <div class="status-row">
+        <span id="lane-status">Lane: —</span>
+        <span id="offset-status">Offset: —</span>
+      </div>
+      <div class="status-row">
+        <span id="collision-status">Collision: —</span>
+        <span id="fps-status">FPS: —</span>
+      </div>
+      <div class="buttons-row">
+        <button id="start-btn">Start Camera</button>
+        <button id="record-btn" disabled>Start Recording</button>
+        <button id="settings-btn">Settings</button>
+        <button id="stop-btn" disabled>Stop</button>
+      </div>
+    </div>
+
+    <!-- Settings + Calibration panel -->
+    <div id="settings-backdrop" class="settings-backdrop hidden">
+      <div class="settings-panel">
+        <div class="settings-header">
+          <h2>Settings & Calibration</h2>
+          <button
+            id="settings-close-btn"
+            class="settings-close-btn"
+            aria-label="Close settings"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div class="settings-body">
+          <!-- Performance -->
+          <div class="settings-group">
+            <label for="perf-profile">Performance profile</label>
+            <select id="perf-profile">
+              <option value="high">High (more accurate, heavier)</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low (higher FPS)</option>
+            </select>
+          </div>
+
+          <div class="settings-group">
+            <label for="resolution">Video resolution</label>
+            <select id="resolution">
+              <option value="1080p">1080p</option>
+              <option value="720p" selected>720p</option>
+              <option value="480p">480p</option>
+            </select>
+          </div>
+
+          <!-- Distance model -->
+          <div class="settings-group">
+            <label for="camera-fov">Camera vertical FOV (degrees)</label>
+            <input
+              type="number"
+              id="camera-fov"
+              min="30"
+              max="90"
+              step="1"
+              value="50"
+            />
+            <small>
+              Approximate vertical field-of-view of your phone camera lens.
+              Used in distance estimation.
+            </small>
+          </div>
+
+          <div class="settings-group">
+            <label for="car-height">
+              Typical vehicle height in front (meters)
+            </label>
+            <input
+              type="number"
+              id="car-height"
+              min="1.0"
+              max="3.0"
+              step="0.1"
+              value="1.5"
+            />
+            <small>
+              Used as a reference object for collision distance estimation.
+              You can calibrate this below.
+            </small>
+          </div>
+
+          <!-- Features -->
+          <div class="settings-group">
+            <label>
+              <input type="checkbox" id="lane-assist-enabled" checked />
+              Enable lane assist
+            </label>
+          </div>
+
+          <div class="settings-group">
+            <label>
+              <input
+                type="checkbox"
+                id="collision-warning-enabled"
+                checked
+              />
+              Enable collision warning
+            </label>
+          </div>
+
+          <div class="settings-group">
+            <label>
+              <input type="checkbox" id="detection-enabled" checked />
+              Enable vehicle detection (COCO-SSD)
+            </label>
+            <small>Turn off on weak devices for better FPS.</small>
+          </div>
+
+          <div class="settings-group">
+            <label>
+              <input type="checkbox" id="beep-enabled" checked />
+              Enable audio warnings
+            </label>
+          </div>
+
+          <div class="settings-group">
+            <label>
+              <input type="checkbox" id="debug-enabled" />
+              Show debug overlays (lane ROI)
+            </label>
+            <small>
+              For testing only. Highlights lane detection region and debug
+              info.
+            </small>
+          </div>
+
+          <!-- Lane center calibration -->
+          <div class="settings-group">
+            <label>Lane center calibration</label>
+            <small>
+              Drive centered in your lane, then tap
+              <strong>Set current as center</strong> to align lane offset.
+            </small>
+            <button id="lane-calibrate-btn" class="inline-btn">
+              Set current as center
+            </button>
+            <small id="lane-calibration-display"></small>
+          </div>
+
+          <!-- Distance calibration -->
+          <div class="settings-group">
+            <label>Distance calibration</label>
+            <small>
+              Park a fixed distance behind a vehicle (e.g. 10m), keep it
+              centered, ensure it is detected (box around it), then enter that
+              distance and tap <strong>Calibrate from detection</strong>.
+            </small>
+            <div class="distance-calibration-row">
+              <input
+                type="number"
+                id="distance-known"
+                min="2"
+                max="40"
+                step="0.5"
+                value="10"
+              />
+              <span class="unit-label">m</span>
+              <button id="distance-calibrate-btn" class="inline-btn">
+                Calibrate from detection
+              </button>
+            </div>
+            <small id="distance-calibration-display"></small>
+          </div>
+
+          <!-- Test warnings -->
+          <div class="settings-group">
+            <label>Test warnings</label>
+            <small>
+              Use these to verify sound and UI without actually being at risk.
+            </small>
+            <div class="test-buttons-row">
+              <button id="test-beep-btn" class="inline-btn">
+                Test beep
+              </button>
+              <button id="test-high-risk-btn" class="inline-btn">
+                Simulate HIGH risk
+              </button>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <small style="color:#f97316;">
+              This app is experimental only. Calibration helps, but it is not
+              a certified safety system. Always keep full control of your
+              vehicle.
+            </small>
+          </div>
+        </div>
+
+        <div class="settings-footer">
+          <button id="settings-save-btn" class="settings-save-btn">
+            Save & Apply
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Simple beep sound for warnings (you can replace with a better sound) -->
+  <audio id="beep-audio">
+    <source
+      src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA="
+      type="audio/wav"
+    />
+  </audio>
+
+  <!-- Computer vision libs -->
+  <!-- OpenCV.js -->
+  <script src="https://docs.opencv.org/4.x/opencv.js"></script>
+
+  <!-- TensorFlow.js + COCO-SSD -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.21.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+
+  <!-- Main app logic -->
+  <script src="main.js"></script>
+</body>
+</html>

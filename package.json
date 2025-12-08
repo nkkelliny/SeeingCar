@@ -1,0 +1,23 @@
+{
+  "name": "dashcam-assist",
+  "version": "1.0.0",
+  "description": "Capacitor-based dashcam with lane assist, collision warning, and calibration",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo \"Static app – ensure files are in www/\"",
+    "sync": "npx cap sync",
+    "android": "npx cap open android",
+    "ios": "npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.4",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^7.4.4",
+    "android": "^0.0.8",
+    "ios": "^0.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "typescript": "^5.9.3"
+  }
+}
