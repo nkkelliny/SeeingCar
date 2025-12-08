@@ -1,7 +1,7 @@
 SeeingCar – Dashcam Assist
 ==========================
 
-![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg) ![Version](https://img.shields.io/badge/version-0.1.0-blue.svg) ![Platform](https://img.shields.io/badge/platform-Web%20Browser-lightgrey.svg) ![License](https://img.shields.io/badge/license-MIT-yellow.svg) ![Status](https://img.shields.io/badge/status-Experimental-orange.svg) ![Last Commit](https://img.shields.io/github/last-commit/your-username/seeingcar-dashcam)
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg) ![Version](https://img.shields.io/badge/version-0.1.0-blue.svg) ![Platform](https://img.shields.io/badge/platform-Web%20Browser-lightgrey.svg) ![Status](https://img.shields.io/badge/status-Experimental-orange.svg)
 
 **SeeingCar** is an experimental browser-based dashcam assist application built using **HTML**, **CSS**, and **JavaScript**. It runs entirely in the browser and leverages:
 
